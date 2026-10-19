@@ -1,0 +1,122 @@
+{
+  "name": "PL_retail_Landing_To_Bronze",
+  "properties": {
+    "activities": [
+      {
+        "name": "Copy_Landing_To_Bronze",
+        "type": "Copy",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "userProperties": [],
+        "typeProperties": {
+          "source": {
+            "type": "DelimitedTextSource",
+            "storeSettings": {
+              "type": "AzureBlobFSReadSettings",
+              "recursive": true,
+              "enablePartitionDiscovery": false
+            },
+            "formatSettings": {
+              "type": "DelimitedTextReadSettings"
+            }
+          },
+          "sink": {
+            "type": "DelimitedTextSink",
+            "storeSettings": {
+              "type": "AzureBlobFSWriteSettings"
+            },
+            "formatSettings": {
+              "type": "DelimitedTextWriteSettings",
+              "quoteAllText": true,
+              "fileExtension": ".txt"
+            }
+          },
+          "enableStaging": false,
+          "translator": {
+            "type": "TabularTranslator",
+            "typeConversion": true,
+            "typeConversionSettings": {
+              "allowDataTruncation": true,
+              "treatBooleanAsNumber": false
+            }
+          }
+        },
+        "inputs": [
+          {
+            "referenceName": "DS_Retail_Landing_CSV",
+            "type": "DatasetReference",
+            "parameters": {}
+          }
+        ],
+        "outputs": [
+          {
+            "referenceName": "DS_Retail_Bronze_CSV",
+            "type": "DatasetReference",
+            "parameters": {}
+          }
+        ]
+      },
+      {
+        "name": "Notebook_Bronze_to_Silver",
+        "type": "DatabricksNotebook",
+        "dependsOn": [
+          {
+            "activity": "Copy_Landing_To_Bronze",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "userProperties": [],
+        "typeProperties": {
+          "notebookPath": "/Shared/retail-data-engineering/01_Bronze_to_Silver_Retail"
+        },
+        "linkedServiceName": {
+          "referenceName": "LS_AzureDatabricks_Retail",
+          "type": "LinkedServiceReference"
+        }
+      },
+      {
+        "name": "Silver_to Gold",
+        "type": "DatabricksNotebook",
+        "dependsOn": [
+          {
+            "activity": "Notebook_Bronze_to_Silver",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "userProperties": [],
+        "typeProperties": {
+          "notebookPath": "/Shared/retail-data-engineering/02_Silver_to_Gold_Retail"
+        },
+        "linkedServiceName": {
+          "referenceName": "LS_AzureDatabricks_Retail",
+          "type": "LinkedServiceReference"
+        }
+      }
+    ],
+    "annotations": []
+  }
+}
